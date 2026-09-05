@@ -115,7 +115,13 @@ function obtenerConfig(param) {
 function actualizarConfig(param, valor) {
   const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Configuracion");
   const datos = hoja.getDataRange().getValues();
-  for (let i = 1; i < datos.length; i++) if (datos[i][0] === param) { hoja.getRange(i + 1, 2).setValue(valor); return; }
+  for (let i = 1; i < datos.length; i++) {
+    if (datos[i][0] === param) { 
+      hoja.getRange(i + 1, 2).setValue(valor); 
+      return; 
+    }
+  }
+  hoja.appendRow([param, valor]);
 }
 function obtenerFAQ() { 
   const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Preguntas_Frecuentes");
