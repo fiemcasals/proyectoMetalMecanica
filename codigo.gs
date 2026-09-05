@@ -59,12 +59,17 @@ function doPost(e) {
     // Extraer ticket si existe
     if (respuestaIA.includes("||TICKET||")) {
       const partes = respuestaIA.split("||TICKET||");
-      respuestaIA = partes[0].trim(); // Lo que se muestra al usuario
-      
+      respuestaIA = partes[0].trim(); 
       const ticketInfo = partes[1].split("||");
-      if(ticketInfo.length >= 2) {
-         guardarTicketNuevo(ticketInfo[0].trim(), ticketInfo[1].trim());
-      }
+      if(ticketInfo.length >= 2) guardarTicketNuevo(ticketInfo[0].trim(), ticketInfo[1].trim());
+    }
+    
+    // Extraer venta si existe
+    if (respuestaIA.includes("||VENTA||")) {
+      const partes = respuestaIA.split("||VENTA||");
+      respuestaIA = partes[0].trim(); 
+      const ventaInfo = partes[1].split("||");
+      if(ventaInfo.length >= 2) notificarVentaAlAdmin(ventaInfo[0].trim(), ventaInfo[1].trim());
     }
 
     return ContentService.createTextOutput(JSON.stringify({ status: "success", reply: respuestaIA })).setMimeType(ContentService.MimeType.JSON);
@@ -162,6 +167,27 @@ function guardarTicketNuevo(pregunta, correo) {
   } catch(e) {}
 }
 
+function notificarVentaAlAdmin(detalle, contacto) {
+  try {
+    const adminEmail = obtenerConfig("Admin_Email");
+    if (adminEmail && adminEmail.includes("@")) {
+      const asunto = "🎉 NUEVA VENTA CONFIRMADA - MetalMecánica";
+      const cuerpoHtml = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+          <h2 style="color: #28a745;">¡Se ha cerrado una nueva venta! 🛒</h2>
+          <p>El asistente virtual acaba de concretar un pedido con un cliente.</p>
+          <div style="background-color: #f8fff9; border-left: 4px solid #28a745; padding: 15px; margin: 15px 0;">
+            <p><strong>Detalle del Pedido:</strong> <em>${detalle}</em></p>
+            <p><strong>Contacto del Cliente:</strong> ${contacto}</p>
+          </div>
+          <p>Por favor, ponete en contacto con el cliente a la brevedad para coordinar el método de pago y el envío.</p>
+        </div>
+      `;
+      MailApp.sendEmail({to: adminEmail, subject: asunto, htmlBody: cuerpoHtml});
+    }
+  } catch(e) {}
+}
+
 function enviarEmailYGuardarFAQ(idTicket, correo, pregunta, respuestaCruda) {
   try {
     // 1. Mejorar la respuesta con la IA
@@ -222,7 +248,8 @@ function llamarGeminiChat(historialArr, resumenAnterior) {
 
   let prompt = `${perfil}\n\n`;
   prompt += `REGLAS ESTRICTAS DE RESPUESTA:\n${reglas}\n`;
-  prompt += `INSTRUCCIÓN ESPECIAL PARA CORREOS: Si pediste un correo y el cliente te lo da, agradecele y DEBES agregar AL FINAL de tu respuesta exactamente este texto oculto: ||TICKET||la pregunta original que no supiste responder||correo_del_cliente@ejemplo.com||\n\n`;
+  prompt += `INSTRUCCIÓN ESPECIAL PARA TICKETS: Si te preguntan algo que no sabés, pedí un correo. Si te lo dan, agregá AL FINAL de tu respuesta exactamente este texto oculto: ||TICKET||pregunta original||correo_del_cliente@ejemplo.com||\n`;
+  prompt += `INSTRUCCIÓN ESPECIAL PARA VENTAS: Para CERRAR una venta, primero debés confirmar los productos y pedirle un dato de contacto (correo o teléfono) al cliente. Cuando el cliente confirme que lo quiere comprar y te dé su contacto, DEBES agregar AL FINAL de tu respuesta exactamente este texto oculto: ||VENTA||detalle completo de los productos y monto||contacto del cliente||\n\n`;
   
   prompt += `Stock actual disponible: ${stockActual}\n`;
   prompt += `Preguntas Frecuentes (Base de conocimiento histórica): ${faqActual}\n`;
