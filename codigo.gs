@@ -22,6 +22,7 @@ function inicializarHojas() {
     hojaConfig.getRange("A1:B1").setFontWeight("bold");
     hojaConfig.appendRow(["Perfil_IA", "Sos el asistente virtual de 'MetalMecánica Gonzalo', una empresa que revende bidones de aceite. Respondés de forma súper cálida, amigable y usando emojis. Tu objetivo es ayudar al cliente a encontrar el bidón que busca. Solo podés vender los productos que te paso en mi contexto. Sé conciso y directo."]);
     hojaConfig.appendRow(["Reglas_IA", "1. NO INVENTES DATOS. Si te preguntan algo que no está en tu Stock o FAQ, respondé que no sabés y PEDILE SU CORREO ELECTRÓNICO para que Gonzalo le responda más tarde.\n2. NO ASUMAS NADA."]);
+    hojaConfig.appendRow(["Admin_Email", "tu_correo@ejemplo.com"]);
   }
 
   let hojaFAQ = libro.getSheetByName("Preguntas_Frecuentes");
@@ -42,7 +43,7 @@ function inicializarHojas() {
 function doGet(e) {
   const action = e.parameter.action;
   if (action === "getStock") return ContentService.createTextOutput(JSON.stringify({ status: "success", data: obtenerStock() })).setMimeType(ContentService.MimeType.JSON);
-  if (action === "getConfig") return ContentService.createTextOutput(JSON.stringify({ status: "success", perfil: obtenerConfig("Perfil_IA"), reglas: obtenerConfig("Reglas_IA") })).setMimeType(ContentService.MimeType.JSON);
+  if (action === "getConfig") return ContentService.createTextOutput(JSON.stringify({ status: "success", perfil: obtenerConfig("Perfil_IA"), reglas: obtenerConfig("Reglas_IA"), adminEmail: obtenerConfig("Admin_Email") })).setMimeType(ContentService.MimeType.JSON);
   if (action === "getTickets") return ContentService.createTextOutput(JSON.stringify({ status: "success", data: obtenerTickets() })).setMimeType(ContentService.MimeType.JSON);
   return ContentService.createTextOutput("Acción no reconocida.");
 }
@@ -82,6 +83,7 @@ function doPost(e) {
   if (action === "updateConfig") {
     actualizarConfig("Perfil_IA", data.perfil);
     actualizarConfig("Reglas_IA", data.reglas);
+    actualizarConfig("Admin_Email", data.adminEmail);
     return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Configuración actualizada." })).setMimeType(ContentService.MimeType.JSON);
   }
 
@@ -130,6 +132,16 @@ function guardarTicketNuevo(pregunta, correo) {
   const idTicket = "TKT-" + Date.now();
   const fecha = new Date().toLocaleString();
   hoja.appendRow([idTicket, fecha, pregunta, correo]);
+  
+  // Notificar al administrador
+  try {
+    const adminEmail = obtenerConfig("Admin_Email");
+    if (adminEmail && adminEmail.includes("@")) {
+      const asunto = "NUEVO TICKET: Pregunta en el bot de MetalMecánica";
+      const cuerpo = `¡Hola!\n\nAlguien hizo una pregunta que el bot no supo responder.\n\nPregunta: "${pregunta}"\nCorreo del cliente: ${correo}\n\nIngresá al panel de administración web para responderle y enseñarle al bot.`;
+      MailApp.sendEmail(adminEmail, asunto, cuerpo);
+    }
+  } catch(e) {}
 }
 
 function enviarEmailYGuardarFAQ(idTicket, correo, pregunta, respuesta) {

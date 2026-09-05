@@ -9,6 +9,7 @@ const loginError = document.getElementById('loginError');
 
 const perfilIA = document.getElementById('perfilIA');
 const reglasIA = document.getElementById('reglasIA');
+const adminEmail = document.getElementById('adminEmail');
 const btnSaveConfig = document.getElementById('btnSaveConfig');
 const configStatus = document.getElementById('configStatus');
 
@@ -39,6 +40,7 @@ function cargarDatosDelServidor() {
             if(data.status === 'success') {
                 perfilIA.value = data.perfil;
                 reglasIA.value = data.reglas;
+                adminEmail.value = data.adminEmail;
             }
         });
 
@@ -106,7 +108,8 @@ btnSaveConfig.addEventListener('click', () => {
             action: 'updateConfig',
             password: currentPassword,
             perfil: perfilIA.value,
-            reglas: reglasIA.value
+            reglas: reglasIA.value,
+            adminEmail: adminEmail.value
         })
     }).then(res => res.json()).then(data => {
         btnSaveConfig.innerText = 'Guardar Configuración';
