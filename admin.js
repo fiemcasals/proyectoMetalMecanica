@@ -1,7 +1,7 @@
 // admin.js - Lógica del Panel de Administración
 
 // REEMPLAZAR ESTA URL CON LA MISMA URL QUE PUSISTE EN script.js
-const SCRIPT_URL = 'ACA_VA_TU_URL_DE_APPS_SCRIPT'; 
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaXnjduXA65Uc0LpJZA8FRGlha1wuJKqEMUGfQq6l7SbFXeP0hO2cZ9DQImM3ztASz/exec'; 
 
 // Elementos del DOM
 const loginScreen = document.getElementById('loginScreen');

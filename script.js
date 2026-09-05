@@ -1,7 +1,7 @@
 // script.js - Lógica del Cliente (Chat con IA)
 
 // REEMPLAZAR ESTA URL CON LA QUE TE DÉ APPS SCRIPT AL "IMPLEMENTAR" COMO APP WEB
-const SCRIPT_URL = 'ACA_VA_TU_URL_DE_APPS_SCRIPT'; 
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaXnjduXA65Uc0LpJZA8FRGlha1wuJKqEMUGfQq6l7SbFXeP0hO2cZ9DQImM3ztASz/exec'; 
 
 const chatBox = document.getElementById('chatBox');
 const userInput = document.getElementById('userInput');
