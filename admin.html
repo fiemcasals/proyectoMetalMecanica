@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - MetalMecánica</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚙️ Panel de Administración</h1>
+            <a href="index.html" class="admin-icon" title="Volver al Chat">🔙</a>
+        </header>
+
+        <div class="content">
+            <!-- Pantalla de Login -->
+            <div id="loginScreen" class="login-screen">
+                <h3>Acceso Restringido</h3>
+                <input type="password" id="adminPassword" placeholder="Contraseña">
+                <button id="btnLogin">Ingresar</button>
+                <div id="loginError" style="color: red; font-size: 14px; display: none;">Contraseña incorrecta</div>
+            </div>
+
+            <!-- Pantalla de Administración -->
+            <div id="dashboardScreen" class="dashboard">
+                
+                <div>
+                    <h3 class="section-title">🧠 Perfil de la Inteligencia Artificial</h3>
+                    <p style="font-size: 14px; margin-bottom: 10px; color: var(--gray);">Modificá cómo querés que la IA trate a tus clientes (cálida, fría, técnica, etc).</p>
+                    <textarea id="perfilIA" rows="4"></textarea>
+                    <button id="btnSavePerfil" style="margin-top: 10px;">Guardar Perfil</button>
+                    <span id="perfilStatus" style="margin-left: 10px; color: green;"></span>
+                </div>
+
+                <div>
+                    <h3 class="section-title">📦 Gestión de Stock Actual</h3>
+                    <div id="stockContainer" class="loading">Cargando stock desde la nube...</div>
+                    <button id="btnSaveStock" style="margin-top: 15px;">Guardar Cambios de Stock</button>
+                    <span id="stockStatus" style="margin-left: 10px; color: green;"></span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

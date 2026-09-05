@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetalMecánica Gonzalo - Asistente</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MetalMecánica Gonzalo 🛢️</h1>
+            <!-- Botón oculto para ir al admin -->
+            <a href="admin.html" class="admin-icon" title="Acceso Admin">⚙️</a>
+        </header>
+
+        <div class="content">
+            <div class="chat-box" id="chatBox">
+                <div class="mensaje msg-bot">
+                    ¡Hola! Soy el asistente virtual de MetalMecánica Gonzalo. ¿Qué tipo de bidón de aceite estás buscando hoy?
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <input type="text" id="userInput" placeholder="Escribí tu consulta acá..." autocomplete="off">
+                <button id="btnSend">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
