@@ -1,9 +1,6 @@
-// admin.js - Lógica del Panel de Administración
-
-// REEMPLAZAR ESTA URL CON LA MISMA URL QUE PUSISTE EN script.js
+// REEMPLAZAR CON TU URL DE APPS SCRIPT
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaXnjduXA65Uc0LpJZA8FRGlha1wuJKqEMUGfQq6l7SbFXeP0hO2cZ9DQImM3ztASz/exec'; 
 
-// Elementos del DOM
 const loginScreen = document.getElementById('loginScreen');
 const dashboardScreen = document.getElementById('dashboardScreen');
 const adminPassword = document.getElementById('adminPassword');
@@ -11,16 +8,18 @@ const btnLogin = document.getElementById('btnLogin');
 const loginError = document.getElementById('loginError');
 
 const perfilIA = document.getElementById('perfilIA');
-const btnSavePerfil = document.getElementById('btnSavePerfil');
-const perfilStatus = document.getElementById('perfilStatus');
+const reglasIA = document.getElementById('reglasIA');
+const btnSaveConfig = document.getElementById('btnSaveConfig');
+const configStatus = document.getElementById('configStatus');
 
 const stockContainer = document.getElementById('stockContainer');
 const btnSaveStock = document.getElementById('btnSaveStock');
 const stockStatus = document.getElementById('stockStatus');
 
+const ticketsContainer = document.getElementById('ticketsContainer');
+
 let currentPassword = "";
 
-// Función de login local
 btnLogin.addEventListener('click', () => {
     if (adminPassword.value === 'PWIGSM') {
         currentPassword = adminPassword.value;
@@ -33,17 +32,13 @@ btnLogin.addEventListener('click', () => {
 });
 
 function cargarDatosDelServidor() {
-    if(SCRIPT_URL === 'ACA_VA_TU_URL_DE_APPS_SCRIPT') {
-        stockContainer.innerText = '⚠️ Error: Falta configurar la URL de Apps Script en admin.js';
-        return;
-    }
-
-    // Cargar Perfil
-    fetch(SCRIPT_URL + "?action=getPerfil")
+    // Cargar Configuración (Perfil y Reglas)
+    fetch(SCRIPT_URL + "?action=getConfig")
         .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
-                perfilIA.value = data.data;
+                perfilIA.value = data.perfil;
+                reglasIA.value = data.reglas;
             }
         });
 
@@ -55,57 +50,75 @@ function cargarDatosDelServidor() {
                 renderizarTablaStock(data.data);
             }
         });
+
+    // Cargar Tickets
+    fetch(SCRIPT_URL + "?action=getTickets")
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                renderizarTickets(data.data);
+            }
+        });
 }
 
 function renderizarTablaStock(stockMatriz) {
     let html = '<table>';
-    html += '<tr><th>ID</th><th>Tipo</th><th>Detalle</th><th>Cant. Disponible</th><th>Precio ($)</th></tr>';
-    
+    html += '<tr><th>ID</th><th>Tipo</th><th>Detalle</th><th>Cant. Disp.</th><th>Precio ($)</th></tr>';
     stockMatriz.forEach((fila, index) => {
         html += `<tr>
-            <td>${fila[0]}</td>
-            <td>${fila[1]}</td>
-            <td>${fila[2]}</td>
+            <td>${fila[0]}</td><td>${fila[1]}</td><td>${fila[2]}</td>
             <td><input type="number" class="stock-input" id="stock_${index}_3" value="${fila[3]}"></td>
             <td><input type="number" class="stock-input" id="stock_${index}_4" value="${fila[4]}"></td>
         </tr>`;
     });
-    
     html += '</table>';
     stockContainer.innerHTML = html;
-    
-    // Guardar la data original globalmente para poder reconstruirla al guardar
     window.stockActual = stockMatriz;
 }
 
-// Guardar nuevo perfil
-btnSavePerfil.addEventListener('click', () => {
-    btnSavePerfil.innerText = 'Guardando...';
-    
+function renderizarTickets(tickets) {
+    if(tickets.length === 0) {
+        ticketsContainer.innerHTML = "<p>✅ No hay consultas pendientes.</p>";
+        return;
+    }
+
+    let html = '';
+    tickets.forEach(ticket => {
+        const idTicket = ticket[0];
+        const pregunta = ticket[2];
+        const correo = ticket[3];
+        html += `
+        <div class="ticket-box" id="box_${idTicket}">
+            <p><strong>De:</strong> ${correo}</p>
+            <p><strong>Pregunta:</strong> ${pregunta}</p>
+            <textarea id="respuesta_${idTicket}" rows="3" placeholder="Escribí tu respuesta acá..."></textarea>
+            <button onclick="responderTicket('${idTicket}', '${correo}', '${pregunta.replace(/'/g, "\\'")}')">Enviar Respuesta y Aprender</button>
+        </div>`;
+    });
+    ticketsContainer.innerHTML = html;
+}
+
+btnSaveConfig.addEventListener('click', () => {
+    btnSaveConfig.innerText = 'Guardando...';
     fetch(SCRIPT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
-            action: 'updatePerfil',
+            action: 'updateConfig',
             password: currentPassword,
-            nuevoPerfil: perfilIA.value
+            perfil: perfilIA.value,
+            reglas: reglasIA.value
         })
-    })
-    .then(res => res.json())
-    .then(data => {
-        btnSavePerfil.innerText = 'Guardar Perfil';
+    }).then(res => res.json()).then(data => {
+        btnSaveConfig.innerText = 'Guardar Configuración';
         if(data.status === 'success') {
-            perfilStatus.innerText = '¡Guardado!';
-            setTimeout(() => perfilStatus.innerText = '', 3000);
+            configStatus.innerText = '¡Guardado!';
+            setTimeout(() => configStatus.innerText = '', 3000);
         }
     });
 });
 
-// Guardar stock editado
 btnSaveStock.addEventListener('click', () => {
     btnSaveStock.innerText = 'Guardando...';
-    
-    // Reconstruir la matriz de stock con los nuevos valores
     let nuevasFilas = [];
     window.stockActual.forEach((fila, index) => {
         let nuevaFila = [...fila];
@@ -116,19 +129,37 @@ btnSaveStock.addEventListener('click', () => {
 
     fetch(SCRIPT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-            action: 'updateStock',
-            password: currentPassword,
-            stockRows: nuevasFilas
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
+        body: JSON.stringify({ action: 'updateStock', password: currentPassword, stockRows: nuevasFilas })
+    }).then(res => res.json()).then(data => {
         btnSaveStock.innerText = 'Guardar Cambios de Stock';
         if(data.status === 'success') {
-            stockStatus.innerText = '¡Stock actualizado!';
+            stockStatus.innerText = '¡Actualizado!';
             setTimeout(() => stockStatus.innerText = '', 3000);
         }
     });
 });
+
+window.responderTicket = function(idTicket, correo, pregunta) {
+    const respuesta = document.getElementById(`respuesta_${idTicket}`).value;
+    if(!respuesta) { alert("Escribí una respuesta primero"); return; }
+    
+    document.getElementById(`box_${idTicket}`).innerHTML = "<i>Enviando correo y procesando...</i>";
+
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+            action: 'responderTicket',
+            password: currentPassword,
+            idTicket: idTicket,
+            correo: correo,
+            pregunta: pregunta,
+            respuesta: respuesta
+        })
+    }).then(res => res.json()).then(data => {
+        if(data.status === 'success') {
+            document.getElementById(`box_${idTicket}`).innerHTML = "<p style='color:green'>✅ Respondido y aprendido por la IA.</p>";
+        } else {
+            document.getElementById(`box_${idTicket}`).innerHTML = "<p style='color:red'>❌ Error al enviar.</p>";
+        }
+    });
+};
