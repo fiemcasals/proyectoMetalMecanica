@@ -137,22 +137,50 @@ function guardarTicketNuevo(pregunta, correo) {
   try {
     const adminEmail = obtenerConfig("Admin_Email");
     if (adminEmail && adminEmail.includes("@")) {
-      const asunto = "NUEVO TICKET: Pregunta en el bot de MetalMecánica";
-      const cuerpo = `¡Hola!\n\nAlguien hizo una pregunta que el bot no supo responder.\n\nPregunta: "${pregunta}"\nCorreo del cliente: ${correo}\n\nIngresá al panel de administración web para responderle y enseñarle al bot.`;
-      MailApp.sendEmail(adminEmail, asunto, cuerpo);
+      const asunto = "🚨 Nuevo Ticket - MetalMecánica Bot";
+      const linkApp = "https://fiemcasals.github.io/proyectoMetalMecanica/admin.html";
+      const cuerpoHtml = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+          <h2 style="color: #0056b3;">¡Tenés una nueva consulta pendiente!</h2>
+          <p>Alguien hizo una pregunta que el asistente virtual no supo responder.</p>
+          <div style="background-color: #f1f5f9; border-left: 4px solid #0056b3; padding: 15px; margin: 15px 0;">
+            <p><strong>Pregunta:</strong> <em>"${pregunta}"</em></p>
+            <p><strong>Correo del cliente:</strong> ${correo}</p>
+          </div>
+          <p>Por favor, ingresá al panel de administración para responderle al cliente. Tu respuesta le llegará automáticamente a su correo y le enseñará al bot qué decir la próxima vez.</p>
+          <a href="${linkApp}" style="display: inline-block; background-color: #0056b3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Abrir Panel de Administración</a>
+        </div>
+      `;
+      MailApp.sendEmail({to: adminEmail, subject: asunto, htmlBody: cuerpoHtml});
     }
   } catch(e) {}
 }
 
-function enviarEmailYGuardarFAQ(idTicket, correo, pregunta, respuesta) {
+function enviarEmailYGuardarFAQ(idTicket, correo, pregunta, respuestaCruda) {
   try {
-    // 1. Enviar Email
-    const asunto = "Respuesta a tu consulta - MetalMecánica Gonzalo";
-    const cuerpo = `¡Hola!\n\nNos consultaste lo siguiente:\n"${pregunta}"\n\nRespuesta:\n${respuesta}\n\n¡Gracias por contactarnos!\nSaludos,\nEl equipo de MetalMecánica Gonzalo`;
-    MailApp.sendEmail(correo, asunto, cuerpo);
+    // 1. Mejorar la respuesta con la IA
+    const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+    const promptRedaccion = `Actuá como el gerente de servicio al cliente de "MetalMecánica Gonzalo". 
+Un cliente preguntó: "${pregunta}"
+Mi respuesta corta y cruda fue: "${respuestaCruda}"
+Redactá un correo electrónico profesional, cálido y amable para el cliente respondiendo su duda usando mi respuesta. 
+Incluí un saludo inicial y una despedida agradeciendo por contactarnos. Solo devolvé el texto del correo, sin aclaraciones tuyas.`;
     
-    // 2. Guardar en FAQ
-    SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Preguntas_Frecuentes").appendRow([pregunta, respuesta]);
+    let respuestaElegante = respuestaCruda; // Fallback por si falla la IA
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
+      const payload = { contents: [{ parts: [{ text: promptRedaccion }] }] };
+      const response = UrlFetchApp.fetch(url, { method: "post", contentType: "application/json", payload: JSON.stringify(payload), muteHttpExceptions: true });
+      const json = JSON.parse(response.getContentText());
+      if (json.candidates && json.candidates.length > 0) respuestaElegante = json.candidates[0].content.parts[0].text;
+    } catch(e) {}
+
+    // 2. Enviar Email al Cliente
+    const asunto = "Respuesta a tu consulta - MetalMecánica Gonzalo";
+    MailApp.sendEmail({to: correo, subject: asunto, body: respuestaElegante});
+    
+    // 3. Guardar en FAQ (guardamos la elegante para que la IA la aprenda bien)
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Preguntas_Frecuentes").appendRow([pregunta, respuestaElegante]);
     
     // 3. Borrar el ticket de pendientes
     const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Consultas_Pendientes");
