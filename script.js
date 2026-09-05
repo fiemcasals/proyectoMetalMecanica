@@ -1,11 +1,18 @@
 // script.js - Lógica del Cliente (Chat con IA)
 
-// REEMPLAZAR ESTA URL CON LA QUE TE DÉ APPS SCRIPT AL "IMPLEMENTAR" COMO APP WEB
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaXnjduXA65Uc0LpJZA8FRGlha1wuJKqEMUGfQq6l7SbFXeP0hO2cZ9DQImM3ztASz/exec'; 
 
 const chatBox = document.getElementById('chatBox');
 const userInput = document.getElementById('userInput');
 const btnSend = document.getElementById('btnSend');
+
+// --- SISTEMA DE MEMORIA ---
+let historial = [];
+let resumenGlobal = "";
+// LÍMITES DIDÁCTICOS (1 Token ≈ 4 caracteres)
+// Puesto en 4000 caracteres (aprox 1000 tokens) para permitir una compra fluida antes de resumir
+const MAX_CARACTERES_HISTORIAL = 4000; 
+const MAX_CARACTERES_RESUMEN = 4000;
 
 function agregarMensaje(texto, sender) {
     const div = document.createElement('div');
@@ -16,55 +23,90 @@ function agregarMensaje(texto, sender) {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+function mostrarCarga(texto) {
+    const div = document.createElement('div');
+    div.id = 'loadingIndicator';
+    div.classList.add('mensaje', 'msg-bot');
+    div.style.fontStyle = 'italic';
+    div.innerText = texto;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function quitarCarga() {
+    const loader = document.getElementById('loadingIndicator');
+    if (loader) loader.remove();
+}
+
 function enviarMensaje() {
     const mensaje = userInput.value.trim();
     if (!mensaje) return;
 
-    // Mostrar mensaje del usuario
     agregarMensaje(mensaje, 'user');
     userInput.value = '';
+    
+    // Guardamos en memoria
+    historial.push("Cliente: " + mensaje);
 
-    // Validar si pegaron la URL
-    if(SCRIPT_URL === 'ACA_VA_TU_URL_DE_APPS_SCRIPT') {
-        agregarMensaje('⚠️ Error: Falta configurar la URL de Apps Script en script.js', 'bot');
+    // 1. Verificar si la memoria total explotó
+    if (resumenGlobal.length > MAX_CARACTERES_RESUMEN) {
+        agregarMensaje('⚠️ Memoria llena. El contexto es demasiado largo. Por favor, recargá la página para iniciar una nueva consulta.', 'bot');
         return;
     }
 
-    // Mostrar indicador de carga
-    const loadingId = 'loading-' + Date.now();
-    const divLoading = document.createElement('div');
-    divLoading.id = loadingId;
-    divLoading.classList.add('mensaje', 'msg-bot');
-    divLoading.style.fontStyle = 'italic';
-    divLoading.innerText = 'Escribiendo...';
-    chatBox.appendChild(divLoading);
-    chatBox.scrollTop = chatBox.scrollHeight;
+    // 2. Verificar si toca hacer resumen
+    let textoHistorial = historial.join("\n");
+    
+    if (textoHistorial.length > MAX_CARACTERES_HISTORIAL) {
+        mostrarCarga('Pensando mucho... (Resumiendo contexto previo) 🧠');
+        
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'summarize', historial: historial })
+        })
+        .then(res => res.json())
+        .then(data => {
+            quitarCarga();
+            // Guardamos el nuevo resumen y reseteamos el historial dejando solo el mensaje actual
+            resumenGlobal = data.summary;
+            historial = ["Cliente: " + mensaje]; 
+            // Ahora sí, llamamos a la IA para responder
+            llamarBackendChat();
+        })
+        .catch(err => {
+            quitarCarga();
+            agregarMensaje('Error de conexión al resumir.', 'bot');
+        });
+    } else {
+        // Chat normal sin resumir
+        llamarBackendChat();
+    }
+}
 
-    // Llamar a la API en Apps Script
+function llamarBackendChat() {
+    mostrarCarga('Escribiendo...');
+    
     fetch(SCRIPT_URL, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'text/plain;charset=utf-8',
-        },
-        // En Apps Script doPost recibe e.postData.contents como string
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
             action: 'chatIA',
-            mensaje: mensaje
+            historial: historial,
+            resumen: resumenGlobal
         })
     })
     .then(response => response.json())
     .then(data => {
-        // Remover indicador de carga
-        document.getElementById(loadingId).remove();
-        
+        quitarCarga();
         if(data.status === 'success') {
             agregarMensaje(data.reply, 'bot');
+            historial.push("Asistente: " + data.reply);
         } else {
             agregarMensaje('Error en el sistema. Intente de nuevo.', 'bot');
         }
     })
     .catch(error => {
-        document.getElementById(loadingId).remove();
+        quitarCarga();
         agregarMensaje('Error de conexión.', 'bot');
     });
 }
