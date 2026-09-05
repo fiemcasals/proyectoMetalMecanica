@@ -89,7 +89,11 @@ function llamarGeminiChat(historialArr, resumenAnterior) {
   const perfil = obtenerPerfilIA();
   const stockActual = JSON.stringify(obtenerStock());
 
-  let prompt = `${perfil}\n\nStock actual disponible: ${stockActual}\n`;
+  let prompt = `${perfil}\n\n`;
+  prompt += `REGLAS ESTRICTAS DE RESPUESTA:\n`;
+  prompt += `1. NO INVENTES DATOS. Si el cliente pregunta algo que no está en tu Stock o en tu Perfil (como métodos de pago, envíos, o productos que no tenés), respondé amablemente que no tenés esa información por el momento.\n`;
+  prompt += `2. NO ASUMAS NADA. Basate ÚNICAMENTE en la información explícita que se te provee a continuación.\n\n`;
+  prompt += `Stock actual disponible (ID, Tipo, Detalle, Cantidad, Precio): ${stockActual}\n`;
   if (resumenAnterior && resumenAnterior.length > 0) {
     prompt += `\nRESUMEN DE LA CHARLA HASTA AHORA (Recordá esto para responder):\n${resumenAnterior}\n`;
   }
