@@ -142,7 +142,7 @@ function llamarGemini(mensajeUsuario) {
 
   const promptMaestro = `${perfil}\n\nStock actual disponible en tu base de datos (Formato: ID, Tipo, Litros, Cantidad, Precio): ${stockActual}\n\nMensaje del cliente: ${mensajeUsuario}`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
   
   const payload = {
     contents: [{ parts: [{ text: promptMaestro }] }]
