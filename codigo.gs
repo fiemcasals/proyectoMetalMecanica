@@ -177,7 +177,16 @@ Incluí un saludo inicial y una despedida agradeciendo por contactarnos. Solo de
 
     // 2. Enviar Email al Cliente
     const asunto = "Respuesta a tu consulta - MetalMecánica Gonzalo";
-    MailApp.sendEmail({to: correo, subject: asunto, body: respuestaElegante});
+    const linkChat = "https://fiemcasals.github.io/proyectoMetalMecanica/";
+    const htmlCliente = `
+      <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <p>${respuestaElegante.replace(/\n/g, '<br>')}</p>
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="${linkChat}" style="background-color: #f39c12; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Continuar con mi compra 🛒</a>
+        </div>
+      </div>
+    `;
+    MailApp.sendEmail({to: correo, subject: asunto, htmlBody: htmlCliente});
     
     // 3. Guardar en FAQ (guardamos la elegante para que la IA la aprenda bien)
     SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Preguntas_Frecuentes").appendRow([pregunta, respuestaElegante]);
