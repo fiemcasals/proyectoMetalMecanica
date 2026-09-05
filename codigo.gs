@@ -93,8 +93,8 @@ function doPost(e) {
   }
 
   if (action === "responderTicket") {
-    const exito = enviarEmailYGuardarFAQ(data.idTicket, data.correo, data.pregunta, data.respuesta);
-    return ContentService.createTextOutput(JSON.stringify({ status: exito ? "success" : "error", message: exito ? "Email enviado y FAQ guardada." : "Error al procesar ticket." })).setMimeType(ContentService.MimeType.JSON);
+    const result = enviarEmailYGuardarFAQ(data.idTicket, data.correo, data.pregunta, data.respuesta);
+    return ContentService.createTextOutput(JSON.stringify({ status: result.success ? "success" : "error", message: result.success ? "Email enviado y FAQ guardada." : result.error })).setMimeType(ContentService.MimeType.JSON);
   }
 
   return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Acción no reconocida." })).setMimeType(ContentService.MimeType.JSON);
@@ -163,9 +163,9 @@ function enviarEmailYGuardarFAQ(idTicket, correo, pregunta, respuesta) {
         break;
       }
     }
-    return true;
+    return { success: true };
   } catch(e) {
-    return false;
+    return { success: false, error: e.toString() };
   }
 }
 

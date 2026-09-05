@@ -162,7 +162,7 @@ window.responderTicket = function(idTicket, correo, pregunta) {
         if(data.status === 'success') {
             document.getElementById(`box_${idTicket}`).innerHTML = "<p style='color:green'>✅ Respondido y aprendido por la IA.</p>";
         } else {
-            document.getElementById(`box_${idTicket}`).innerHTML = "<p style='color:red'>❌ Error al enviar.</p>";
+            document.getElementById(`box_${idTicket}`).innerHTML = `<p style='color:red'>❌ Error al enviar: ${data.message}</p>`;
         }
     });
 };
