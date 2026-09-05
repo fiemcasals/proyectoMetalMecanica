@@ -142,7 +142,7 @@ function llamarGemini(mensajeUsuario) {
 
   const promptMaestro = `${perfil}\n\nStock actual disponible en tu base de datos (Formato: ID, Tipo, Litros, Cantidad, Precio): ${stockActual}\n\nMensaje del cliente: ${mensajeUsuario}`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
   
   const payload = {
     contents: [{ parts: [{ text: promptMaestro }] }]
@@ -161,7 +161,7 @@ function llamarGemini(mensajeUsuario) {
     if (json.candidates && json.candidates.length > 0) {
       return json.candidates[0].content.parts[0].text;
     } else {
-      return "Hubo un error al procesar tu respuesta con la IA.";
+      return "Hubo un error al procesar tu respuesta con la IA. Detalle: " + response.getContentText();
     }
   } catch (e) {
     return "Error de conexión con la IA.";
